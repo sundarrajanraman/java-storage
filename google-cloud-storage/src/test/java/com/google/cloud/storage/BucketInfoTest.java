@@ -326,49 +326,65 @@ public class BucketInfoTest {
   @Test
   public void testLifecycleRules() {
     Rule deleteLifecycleRule =
-        new LifecycleRule(
-                LifecycleAction.newDeleteAction(),
-                LifecycleCondition.newBuilder().setAge(10).build())
-            .toPb();
+            new LifecycleRule(
+                    LifecycleAction.newDeleteAction(),
+                    LifecycleCondition.newBuilder().setAge(10).setMatchesPrefix(Arrays.asList("abc", "ijk")).setMatchesSuffix(Arrays.asList("xyz")).build())
+                    .toPb();
 
     assertEquals(
-        LifecycleRule.DeleteLifecycleAction.TYPE, deleteLifecycleRule.getAction().getType());
+            LifecycleRule.DeleteLifecycleAction.TYPE, deleteLifecycleRule.getAction().getType());
     assertEquals(10, deleteLifecycleRule.getCondition().getAge().intValue());
+    assertEquals(2, deleteLifecycleRule.getCondition().getMatchesPrefix().size());
+    assertEquals("abc", (String)deleteLifecycleRule.getCondition().getMatchesPrefix().get(0));
+    assertEquals("ijk", (String)deleteLifecycleRule.getCondition().getMatchesPrefix().get(1));
+    assertEquals(1, deleteLifecycleRule.getCondition().getMatchesSuffix().size());
+    assertEquals("xyz", deleteLifecycleRule.getCondition().getMatchesSuffix().get(0));
+
     assertTrue(
-        LifecycleRule.fromPb(deleteLifecycleRule).getAction() instanceof DeleteLifecycleAction);
+            LifecycleRule.fromPb(deleteLifecycleRule).getAction() instanceof DeleteLifecycleAction);
+
+    LifecycleRule lcr = LifecycleRule.fromPb(deleteLifecycleRule);
+    assertEquals(
+            LifecycleRule.DeleteLifecycleAction.TYPE, lcr.getAction().getActionType());
+    assertEquals(10, lcr.getCondition().getAge().intValue());
+    assertEquals(2, lcr.getCondition().getMatchesPrefix().size());
+    assertEquals("abc", (String)lcr.getCondition().getMatchesPrefix().get(0));
+    assertEquals("ijk", (String)lcr.getCondition().getMatchesPrefix().get(1));
+    assertEquals(1, lcr.getCondition().getMatchesSuffix().size());
+    assertEquals("xyz", lcr.getCondition().getMatchesSuffix().get(0));
 
     Rule setStorageClassLifecycleRule =
-        new LifecycleRule(
-                LifecycleAction.newSetStorageClassAction(StorageClass.COLDLINE),
-                LifecycleCondition.newBuilder()
-                    .setIsLive(true)
-                    .setNumberOfNewerVersions(10)
-                    .build())
-            .toPb();
+            new LifecycleRule(
+                    LifecycleAction.newSetStorageClassAction(StorageClass.COLDLINE),
+                    LifecycleCondition.newBuilder()
+                            .setIsLive(true)
+                            .setNumberOfNewerVersions(10)
+                            .build())
+                    .toPb();
 
     assertEquals(
-        StorageClass.COLDLINE.toString(),
-        setStorageClassLifecycleRule.getAction().getStorageClass());
+            StorageClass.COLDLINE.toString(),
+            setStorageClassLifecycleRule.getAction().getStorageClass());
     assertTrue(setStorageClassLifecycleRule.getCondition().getIsLive());
     assertEquals(10, setStorageClassLifecycleRule.getCondition().getNumNewerVersions().intValue());
     assertTrue(
-        LifecycleRule.fromPb(setStorageClassLifecycleRule).getAction()
-            instanceof SetStorageClassLifecycleAction);
+            LifecycleRule.fromPb(setStorageClassLifecycleRule).getAction()
+                    instanceof SetStorageClassLifecycleAction);
 
     Rule lifecycleRule =
-        new LifecycleRule(
-                LifecycleAction.newSetStorageClassAction(StorageClass.COLDLINE),
-                LifecycleCondition.newBuilder()
-                    .setIsLive(true)
-                    .setNumberOfNewerVersions(10)
-                    .setDaysSinceNoncurrentTime(30)
-                    .setNoncurrentTimeBefore(new DateTime(System.currentTimeMillis()))
-                    .setCustomTimeBefore(new DateTime(System.currentTimeMillis()))
-                    .setDaysSinceCustomTime(30)
-                    .setMatchesSuffix(Collections.singletonList("-suffix"))
-                    .setMatchesPrefix(Collections.singletonList("prefix-"))
-                    .build())
-            .toPb();
+            new LifecycleRule(
+                    LifecycleAction.newSetStorageClassAction(StorageClass.COLDLINE),
+                    LifecycleCondition.newBuilder()
+                            .setIsLive(true)
+                            .setNumberOfNewerVersions(10)
+                            .setDaysSinceNoncurrentTime(30)
+                            .setNoncurrentTimeBefore(new DateTime(System.currentTimeMillis()))
+                            .setCustomTimeBefore(new DateTime(System.currentTimeMillis()))
+                            .setDaysSinceCustomTime(30)
+                            .setMatchesSuffix(Collections.singletonList("-suffix"))
+                            .setMatchesPrefix(Collections.singletonList("prefix-"))
+                            .build())
+                    .toPb();
     assertEquals(StorageClass.COLDLINE.toString(), lifecycleRule.getAction().getStorageClass());
     assertTrue(lifecycleRule.getCondition().getIsLive());
     assertEquals(10, lifecycleRule.getCondition().getNumNewerVersions().intValue());
@@ -380,29 +396,32 @@ public class BucketInfoTest {
     assertEquals("prefix-", lifecycleRule.getCondition().getMatchesPrefix().get(0));
     assertEquals("-suffix", lifecycleRule.getCondition().getMatchesSuffix().get(0));
     assertTrue(
-        LifecycleRule.fromPb(lifecycleRule).getAction() instanceof SetStorageClassLifecycleAction);
+            LifecycleRule.fromPb(lifecycleRule).getAction() instanceof SetStorageClassLifecycleAction);
 
     Rule abortMpuLifecycleRule =
-        new LifecycleRule(
-                LifecycleAction.newAbortIncompleteMPUploadAction(),
-                LifecycleCondition.newBuilder().setAge(10).build())
-            .toPb();
+            new LifecycleRule(
+                    LifecycleAction.newAbortIncompleteMPUploadAction(),
+                    LifecycleCondition.newBuilder().setAge(10).build())
+                    .toPb();
     assertEquals(AbortIncompleteMPUAction.TYPE, abortMpuLifecycleRule.getAction().getType());
     assertEquals(10, abortMpuLifecycleRule.getCondition().getAge().intValue());
     assertTrue(
-        LifecycleRule.fromPb(abortMpuLifecycleRule).getAction()
-            instanceof AbortIncompleteMPUAction);
+            LifecycleRule.fromPb(abortMpuLifecycleRule).getAction()
+                    instanceof AbortIncompleteMPUAction);
 
     Rule unsupportedRule =
-        new LifecycleRule(
-                LifecycleAction.newLifecycleAction("This action type doesn't exist"),
-                LifecycleCondition.newBuilder().setAge(10).build())
-            .toPb();
+            new LifecycleRule(
+                    LifecycleAction.newLifecycleAction("This action type doesn't exist"),
+                    LifecycleCondition.newBuilder().setAge(10).build())
+                    .toPb();
     unsupportedRule.setAction(
-        unsupportedRule.getAction().setType("This action type also doesn't exist"));
+            unsupportedRule.getAction().setType("This action type also doesn't exist"));
 
     LifecycleRule.fromPb(
-        unsupportedRule); // If this doesn't throw an exception, unsupported rules are working
+            unsupportedRule); // If this doesn't throw an exception, unsupported rules are working
+
+
+
   }
 
   @Test
